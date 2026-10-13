@@ -112,6 +112,10 @@
       var error = validate(view.inputs[key]);
       if (error) errors.push("N" + (index + 1) + ": " + error);
     });
+    if (view.inputs.exam) {
+      var examError = validate(view.inputs.exam);
+      if (examError) errors.push("Exame: " + examError);
+    }
     view.error.textContent = errors.join(" ");
     view.error.hidden = errors.length === 0;
 
@@ -122,19 +126,43 @@
       tag: view.tag
     };
     calculationInput.usesPim = calculator.shouldUsePim(calculationInput);
+    var isDP = !calculationInput.usesPim;
+    if (isDP) {
+      calculationInput.exam = view.data.exam;
+    }
     var result = calculator.calculate(calculationInput);
-    var formula = calculationInput.usesPim
-      ? "Média = (N1 × 4 + N2 × 4 + PIM × 2) ÷ 10. "
-      : "Média = (N1 + N2) ÷ 2. ";
     var total = result.semesterOfficial;
-    view.total.textContent = total === null ? "Pendente" : format(total);
-    view.total.setAttribute("data-pending", total === null ? "true" : "false");
-    if (total === null) {
+    var provisional = calculationInput.usesPim && total === null
+      && result.provisionalSemester !== null && result.provisionalSemester !== undefined;
+    var pimEmpty = calculationInput.usesPim && calculator.parseValue(grades.pim).value === null;
+    var formula = !calculationInput.usesPim
+      ? "Média = (N1 + N2) ÷ 2. "
+      : pimEmpty
+        ? "Média provisória = (N1 + N2) ÷ 2. Definitiva = (N1 × 4 + N2 × 4 + PIM × 2) ÷ 10. "
+        : "Média = (N1 × 4 + N2 × 4 + PIM × 2) ÷ 10. ";
+    if (isDP && result.final !== null) {
+      view.total.textContent = format(result.finalOfficial);
+      view.total.setAttribute("data-pending", "false");
+      view.total.setAttribute("data-pass", result.finalOfficial >= 5 ? "true" : "false");
+      view.total.title = "Média semestral: " + format(result.semester) + ". "
+        + "Média final = (MS + Exame) ÷ 2 = " + format(result.final)
+        + (result.finalOfficial !== result.final ? "; arredondada para 5,0." : ".");
+    } else if (provisional) {
+      view.total.textContent = format(result.provisionalSemester);
+      view.total.setAttribute("data-pending", "false");
+      view.total.removeAttribute("data-pass");
+      view.total.title = "Média provisória = (N1 + N2) ÷ 2 = " + format(result.provisionalSemester)
+        + ". Preencha o PIM para o cálculo definitivo.";
+    } else if (total === null) {
+      view.total.textContent = "Pendente";
+      view.total.setAttribute("data-pending", "true");
       view.total.removeAttribute("data-pass");
       view.total.title = calculationInput.usesPim
         ? "Preencha N1, N2 e PIM com notas válidas de 0 a 10."
-        : "Preencha N1 e N2 com notas de 0 a 10. O PIM só entra quando N2 e PIM estiverem preenchidos.";
+        : "Matéria DP: preencha N1 e N2 com notas de 0 a 10. Média = (N1 + N2) ÷ 2, sem PIM.";
     } else {
+      view.total.textContent = format(total);
+      view.total.setAttribute("data-pending", "false");
       view.total.setAttribute("data-pass", result.semester >= 6.7 ? "true" : "false");
       view.total.title = formula
         + (total !== result.semester
@@ -142,30 +170,50 @@
           : "Média calculada: " + format(result.semester) + ".");
     }
 
-    var required = calculator.getRequiredGrade(calculationInput);
-    var names = { np1: "N1", np2: "N2", pim: "PIM", exam: "EX" };
-    view.required.setAttribute("data-state", required.state);
-    view.requiredLabel.textContent = required.field === "exam" ? "Exame" : "Para passar";
-    if (required.state === "pending") {
-      view.required.textContent = "Pendente";
-      view.required.title = calculationInput.usesPim
-        ? "Confira as notas de N1, N2 e PIM; use valores de 0 a 10."
-        : "Informe uma nota válida em N1 ou N2 para calcular quanto falta na outra.";
-    } else if (required.state === "achieved") {
-      view.required.textContent = "Atingida";
-      view.required.title = "A média para aprovação direta já foi atingida. A aprovação também exige frequência de pelo menos 75%.";
-    } else if (required.state === "impossible") {
-      view.required.textContent = names[required.field] + " > 10";
-      view.required.title = "Seriam necessários " + format(required.value) + " na " + names[required.field]
-        + ". Não é possível atingir a média direta só com essa nota. Lance a nota restante para calcular o exame.";
-    } else {
-      var needed = required.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      view.required.textContent = required.field === "exam" ? needed : names[required.field] + ": " + needed;
-      view.required.title = required.field === "exam"
-        ? "Exame: mínimo de " + needed + " para média final de pelo menos 4,75, arredondada para 5,0. Exige frequência mínima de 75%."
-        : "Mínimo de " + needed + " em " + names[required.field] + " para atingir média de 6,70, arredondada para 7,0.";
+    if (view.examWrap) {
+      view.examWrap.hidden = !(isDP && result.examRequired === true);
     }
-    view.required.title += " " + formula;
+
+    if (isDP && result.final !== null) {
+      if (result.finalOfficial >= 5) {
+        view.required.setAttribute("data-state", "achieved");
+        view.requiredLabel.textContent = "Resultado";
+        view.required.textContent = result.finalOfficial !== result.final ? "Aprovado (arred.)" : "Aprovado";
+        view.required.title = "Média final: " + format(result.finalOfficial) + ". Aprovado após exame.";
+      } else {
+        view.required.setAttribute("data-state", "impossible");
+        view.requiredLabel.textContent = "Resultado";
+        view.required.textContent = "Reprovado";
+        view.required.title = "Média final: " + format(result.final) + ". Reprovado por nota.";
+      }
+    } else {
+      var required = calculator.getRequiredGrade(calculationInput);
+      var names = { np1: "N1", np2: "N2", pim: "PIM", exam: "EX" };
+      view.required.setAttribute("data-state", required.state);
+      view.requiredLabel.textContent = required.field === "exam" ? "Exame" : "Para passar";
+      if (required.state === "pending") {
+        view.required.textContent = "Pendente";
+        view.required.title = calculationInput.usesPim
+          ? "Confira as notas de N1, N2 e PIM; use valores de 0 a 10."
+          : "Informe uma nota válida em N1 ou N2 para calcular quanto falta na outra.";
+      } else if (required.state === "achieved") {
+        view.required.textContent = "Atingida";
+        view.required.title = "A média para aprovação direta já foi atingida. A aprovação também exige frequência de pelo menos 75%.";
+      } else if (required.state === "impossible") {
+        view.required.textContent = names[required.field] + " > 10";
+        view.required.title = "Seriam necessários " + format(required.value) + " na " + names[required.field]
+          + ". Não é possível atingir a média direta só com essa nota. Lance a nota restante para calcular o exame.";
+      } else {
+        var needed = required.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        view.required.textContent = required.field === "exam" ? needed : names[required.field] + ": " + needed;
+        view.required.title = required.field === "exam"
+          ? "Exame: mínimo de " + needed + " para média final de pelo menos 4,75, arredondada para 5,0. Exige frequência mínima de 75%."
+          : pimEmpty && (required.field === "np1" || required.field === "np2")
+            ? "Mínimo de " + needed + " em " + names[required.field] + " para alcançar média 7,0 (sem considerar o PIM)."
+            : "Mínimo de " + needed + " em " + names[required.field] + " para atingir média de 6,70, arredondada para 7,0.";
+      }
+      view.required.title += " " + formula;
+    }
   }
 
   function renderAll() {
@@ -218,6 +266,7 @@
     view.name = view.subject.querySelector(".name").textContent;
     view.inputs.np1.setAttribute("aria-label", "N1 — " + view.name);
     view.inputs.np2.setAttribute("aria-label", "N2 — " + view.name);
+    if (view.inputs.exam) view.inputs.exam.setAttribute("aria-label", "Exame — " + view.name);
     view.total.setAttribute("aria-label", "Média total — " + view.name);
     view.required.setAttribute("aria-label", "Nota necessária para aprovação — " + view.name);
     view.editButton.setAttribute("aria-label", "Editar matéria — " + view.name);
@@ -299,6 +348,7 @@
     // O campo de nota original passa a ser N1, preservando o valor cadastrado.
     data.np1 = Object.prototype.hasOwnProperty.call(data, "np1") ? textValue(data.np1) : textValue(legacy[id]);
     data.np2 = textValue(data.np2);
+    data.exam = textValue(data.exam);
     grades.subjects[id] = data;
     var view = { id: id, name: nameNode.textContent, subjectName: subjectNameText,
       tag: subjectTagText, subject: subject, data: data, inputs: {} };
@@ -307,6 +357,9 @@
     view.error.hidden = true;
     var wrap = create("div", "nota-wrap");
     wrap.append(addInput(view, "np1", "N1"), addInput(view, "np2", "N2"));
+    view.examWrap = addInput(view, "exam", "Exame");
+    view.examWrap.hidden = true;
+    wrap.appendChild(view.examWrap);
     var totalField = create("div", "nota-field");
     view.total = create("output", "nota media-total", "Pendente");
     view.total.id = id + "-total";
@@ -500,12 +553,13 @@
     views.forEach(function (view) {
       view.data.np1 = "";
       view.data.np2 = "";
+      view.data.exam = "";
       // Limpa também dados salvos pela versão anterior.
       delete view.data.frequency;
-      delete view.data.exam;
       delete view.data.usesPim;
       view.inputs.np1.value = "";
       view.inputs.np2.value = "";
+      if (view.inputs.exam) view.inputs.exam.value = "";
     });
     save(STORAGE_KEY, state);
     save(LEGACY_KEY, legacy);

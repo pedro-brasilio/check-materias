@@ -59,6 +59,7 @@
             final: null,
             finalOfficial: null,
             np2Needed: null,
+            provisionalSemester: null,
             examNeeded: null,
             examRequired: null,
             errors: {},
@@ -78,6 +79,13 @@
         const np2 = units('np2');
         const pim = usesPim === true ? units('pim') : null;
         let semesterMilli = null;
+
+        if (usesPim === true && pim === null && np1 !== null) {
+            result.np2Needed = Math.max(0, 1400 - np1) / 100;
+            if (np2 !== null) {
+                result.provisionalSemester = (np1 * 5 + np2 * 5) / 1000;
+            }
+        }
 
         if (np1 !== null && usesPim !== null && (usesPim === false || pim !== null)) {
             const knownWeighted = usesPim ? np1 * 4 + pim * 2 : np1 * 5;
@@ -137,10 +145,9 @@
 
     function shouldUsePim(input = {}) {
         const source = input && typeof input === 'object' ? input : {};
-        // DP subjects are graded only by (N1 + N2) / 2; PIM never participates.
-        if (source.tag === 'DP') return false;
-        const isPresent = value => value !== null && value !== undefined && !(typeof value === 'string' && value.trim() === '');
-        return isPresent(source.np2) && isPresent(source.pim);
+        // DP: (N1 + N2) / 2, sem PIM. Regular: sempre com PIM (peso 20%).
+        // PIM em branco deixa a média pendente, nunca vira fórmula de DP.
+        return source.tag !== 'DP';
     }
 
     function getRequiredGrade(input = {}) {
@@ -155,6 +162,14 @@
             parsed[field] = parseValue(source[field]);
             if (parsed[field].error) return pending;
             if (parsed[field].value === null) missing.push(field);
+        }
+
+        if (usesPim && missing.length === 2 && missing.includes('pim')) {
+            const filledField = !missing.includes('np1') ? 'np1' : 'np2';
+            const missingField = missing.includes('np1') ? 'np1' : 'np2';
+            const filledVal = Math.round(parsed[filledField].value * 100);
+            const value = Math.max(0, 1400 - filledVal) / 100;
+            return { state: value > 10 ? 'impossible' : 'required', field: missingField, value };
         }
 
         if (missing.length > 1) return pending;
