@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check de Matérias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1 class="title">Check de Matérias</h1>
+
+
+      <div class="progress" hidden>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-text"><span id="doneCount">0</span> de <span id="totalCount">0</span> concluídas</span>
+      </div>
+      <div class="pim-setting">
+        <label for="pimInput">PIM</label>
+        <input id="pimInput" class="nota" type="text" inputmode="decimal" placeholder="—" autocomplete="off" aria-label="PIM (0 a 10)" aria-describedby="pimError" />
+      </div>
+      <p id="pimError" class="field-error" hidden></p>
+    </header>
+
+    <p id="storageMessage" class="storage-message" role="status" hidden></p>
+
+    <div class="subject-actions">
+      <button class="add-subject" id="addSubjectBtn" type="button" aria-expanded="false" aria-controls="subjectForm">Adicionar matéria</button>
+      <button class="restore-subjects" id="restoreSubjectsBtn" type="button" hidden>Restaurar matérias originais</button>
+      <form class="subject-form" id="subjectForm" hidden>
+        <div class="subject-form-field">
+          <label for="subjectName">Nome da matéria</label>
+          <input id="subjectName" name="subjectName" type="text" maxlength="100" required autocomplete="off" placeholder="Ex.: Matemática" />
+        </div>
+        <div class="subject-form-field">
+          <label for="subjectTag">Tag</label>
+          <select id="subjectTag" name="subjectTag">
+            <option value="">Sem tag</option>
+            <option value="Presencial">Presencial</option>
+            <option value="AVA">AVA</option>
+            <option value="DP">DP</option>
+            <option value="optativa">Optativa</option>
+          </select>
+        </div>
+        <button class="save-subject" type="submit">Salvar matéria</button>
+        <button class="cancel-subject" id="cancelSubjectBtn" type="button">Cancelar</button>
+      </form>
+    </div>
+
+    <ul class="list" id="list">
+      <li class="subject" data-id="D27G_17501_R_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Cloud Computing e DevOps</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="D47G_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Desenvolvimento Mobile JavaScript <span class="tag">optativa</span></span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="58D3_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Desenvolvimento Web com .NET</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="58D1_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Desenvolvimento Web Responsivo</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="D37G_17501_R_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Empreendedorismo em TI</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="57D7_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Engenharia de Software Ágil Aplicada</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="D07G_17501_D_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Machine Learning e Análise de Dados</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="57D8_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Modelagem de Banco de Dados Relacional e NoSQL</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="58D5_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Programação Aplicada em .NET</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="58D6_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Programação de Banco de Dados</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="57D9_17501_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Programação Orientada a Objetos com C#</span></span>
+        </button>
+      </li>
+      <li class="subject" data-id="D64G_17501_R_20262">
+        <button class="row" role="checkbox" aria-checked="false">
+          <span class="box"><svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" /></svg></span>
+          <span class="info"><span class="name">Relações Étnico-Raciais e Afrodescendência</span></span>
+        </button>
+      </li>
+    </ul>
+
+    <footer class="footer">
+      <p class="done-msg" id="doneMsg">Tudo concluído. Mandou bem!</p>
+      <button class="reset" id="resetBtn" type="button">Limpar tudo</button>
+    </footer>
+  </main>
+
+  <script src="grades.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
